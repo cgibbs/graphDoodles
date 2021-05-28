@@ -4,6 +4,10 @@ import random
 WIDTH = 800
 HEIGHT = 800
 
+OPP_FORCE_MOD = 4
+
+ORBITAL_STRENGTH = 200
+
 class Node:
     # opposing force radius
     oppForceRadius = 100
@@ -31,14 +35,14 @@ class Node:
             # if closer than oppForceRadius, cheap and imprecise math here
             if (nodeDist < self.oppForceRadius):
                 if (nodeDistance(self, DUMMY_CENTER_NODE) > nodeDistance(node, DUMMY_CENTER_NODE)):
-                    self.pushAway(node, ((self.oppForceRadius * 4) / nodeDist))
+                    self.pushAway(node, ((self.oppForceRadius * OPP_FORCE_MOD) / nodeDist))
                 else:
-                    node.pushAway(self, ((self.oppForceRadius * 4) / nodeDist))
+                    node.pushAway(self, ((self.oppForceRadius * OPP_FORCE_MOD) / nodeDist))
     
     def moveToward(self, otherNode, strength=1):
         # the divisor here affects how many orbital clouds form, and how stable they are?
-        self.x += ((otherNode.x - self.x) / 200) * strength
-        self.y += ((otherNode.y - self.y) / 200) * strength
+        self.x += ((otherNode.x - self.x) / ORBITAL_STRENGTH) * strength
+        self.y += ((otherNode.y - self.y) / ORBITAL_STRENGTH) * strength
         
         # self.x = abs(self.x)
         # self.y = abs(self.y)
@@ -50,8 +54,8 @@ class Node:
     
     def pushAway(self, otherNode, strength=1):
         # the divisor here affects how many orbital clouds form, and how stable they are?
-        otherNode.x -= ((self.x - otherNode.x) / 200) * strength
-        otherNode.y -= ((self.y - otherNode.y) / 200) * strength
+        otherNode.x -= ((self.x - otherNode.x) / ORBITAL_STRENGTH) * strength
+        otherNode.y -= ((self.y - otherNode.y) / ORBITAL_STRENGTH) * strength
         
         # otherNode.x = abs(otherNode.x)
         # otherNode.y = abs(otherNode.y)
@@ -88,12 +92,12 @@ class Edge:
             if (distance > self.eLength * 1.3):
                 self.nodeTwo.moveToward(self.nodeOne, 5)
             elif (distance < self.eLength * 0.8):
-                self.nodeOne.pushAway(self.nodeTwo, (self.eLength * 2 / (distance * 10)))
+                self.nodeOne.pushAway(self.nodeTwo, (self.eLength * OPP_FORCE_MOD / (distance * 10)))
         else:
             if (distance > self.eLength * 1.3):
                 self.nodeOne.moveToward(self.nodeTwo, 5)
             elif (distance < self.eLength * 0.5):
-                self.nodeTwo.pushAway(self.nodeOne, (self.eLength * 2 / (distance * 10)))
+                self.nodeTwo.pushAway(self.nodeOne, (self.eLength * OPP_FORCE_MOD / (distance * 10)))
             
     def render(self):
         line(self.nodeOne.x, self.nodeOne.y, self.nodeTwo.x, self.nodeTwo.y)
