@@ -1,6 +1,9 @@
 import math
 import random
 
+WIDTH = 800
+HEIGHT = 800
+
 class Node:
     # opposing force radius
     oppForceRadius = 100
@@ -11,7 +14,7 @@ class Node:
     x = 0
     y = 0
     
-    def __init__(self, x, y, anchor=False, oppForceRadius=100):
+    def __init__(self, x, y, anchor=False, oppForceRadius=140):
         self.x = x
         self.y = y
         self.anchor = anchor
@@ -22,23 +25,42 @@ class Node:
             if (self.x == node.x and self.y == node.y):
                 continue
             
-            #if ((Math.abs(Math.abs(self.x) - Math.abs(node.x)) < 50) || (Math.abs(Math.abs(self.y) - Math.abs(node.y)) < 50))
-            
+            nodeDist = nodeDistance(self, node)            
+
             # if closer than oppForceRadius, cheap and imprecise math here
-            if ((abs(self.x - node.x) < self.oppForceRadius) and (abs(self.y - node.y) < self.oppForceRadius)):
-                self.pushAway(node)    
+            if (nodeDist < self.oppForceRadius):
+                if (nodeDistance(self, DUMMY_CENTER_NODE) > nodeDistance(node, DUMMY_CENTER_NODE)):
+                    self.pushAway(node, ((self.oppForceRadius * 2) / nodeDist))
+                else:
+                    node.pushAway(self, ((self.oppForceRadius * 2) / nodeDist))
     
-    def moveToward(self, otherNode):
-        self.x += (otherNode.x - self.x) / 100
-        self.y += (otherNode.y - self.y) / 100
+    def moveToward(self, otherNode, strength=1):
+        self.x += ((otherNode.x - self.x) / 100) * strength
+        self.y += ((otherNode.y - self.y) / 100) * strength
+        
+        # self.x = abs(self.x)
+        # self.y = abs(self.y)
     
-    def pushAway(self, otherNode):
-        otherNode.x += (otherNode.x - self.x) / 100
-        otherNode.y += (otherNode.y - self.y) / 100
+        if (self.x < 0):
+            self.x += 200
+        if (self.y < 0):
+            self.y += 200
+    
+    def pushAway(self, otherNode, strength=1):
+        otherNode.x -= ((self.x - otherNode.x) / 100) * strength
+        otherNode.y -= ((self.y - otherNode.y) / 100) * strength
+        
+        # otherNode.x = abs(otherNode.x)
+        # otherNode.y = abs(otherNode.y)
+        if (otherNode.x < 0):
+            otherNode.x += 400
+        if (otherNode.y < 0):
+            otherNode.y += 400
 
     def render(self):
         circle(self.x, self.y, 10)
 
+DUMMY_CENTER_NODE = Node(400, 400)
 
 class Edge:
     eLength = 200
@@ -53,12 +75,21 @@ class Edge:
     
     # run after checking for intruders on all Nodes
     def validateEnds(self):
+        global WIDTH, HEIGHT
         # if end Nodes are too far away, bring them back toward each other
-        distance = math.sqrt((abs(self.nodeOne.x - self.nodeTwo.x) ** 2) + (abs(self.nodeOne.y - self.nodeTwo.y) ** 2))
-        if (distance > self.eLength * 1.1):
-            self.nodeTwo.moveToward(self.nodeOne)
-        elif (distance < self.eLength * 0.9):
-            self.nodeTwo.pushAway(self.nodeOne)
+        distance = nodeDistance(self.nodeOne, self.nodeTwo)
+        
+        # TODO: if nodeOne closer to center, push it away; else, push nodeTwo away 
+        if (nodeDistance(self.nodeOne, DUMMY_CENTER_NODE) < nodeDistance(self.nodeTwo, DUMMY_CENTER_NODE)):
+            if (distance > self.eLength * 1.1):
+                self.nodeTwo.moveToward(self.nodeOne, 5)
+            elif (distance < self.eLength * 0.9):
+                self.nodeOne.pushAway(self.nodeTwo, 2)
+        else:
+            if (distance > self.eLength * 1.1):
+                self.nodeOne.moveToward(self.nodeTwo, 5)
+            elif (distance < self.eLength * 0.9):
+                self.nodeTwo.pushAway(self.nodeOne, 2)
             
     def render(self):
         line(self.nodeOne.x, self.nodeOne.y, self.nodeTwo.x, self.nodeTwo.y)
@@ -66,6 +97,15 @@ class Edge:
 
 def randomNode():
     return Node(random.randint(100, 700), random.randint(100, 700))
+
+def randomEdges(howMany, nodeList, eLength=200):
+    edges = []
+    for i in range(howMany):
+        edges.append(Edge(eLength, nodeList[random.randint(0, len(nodeList) - 1)], nodeList[random.randint(0, len(nodeList) - 1)]))
+    return edges
+
+def nodeDistance(nodeOne, nodeTwo):
+    return math.sqrt(((nodeOne.x - nodeTwo.x) ** 2) + ((nodeOne.y - nodeTwo.y) ** 2))
 
 """ 
 basic program flow:
@@ -77,22 +117,25 @@ basic program flow:
         render all nodes and edges
 """
 
-WIDTH = 800
-HEIGHT = 800
-
-checksRemaining = 200
+checksRemaining = 2000
 
 draw_c = color(100,100,100)
 
 #nodeList = [Node(400, 450), Node(375, 425), Node(325, 460), Node(450, 415), Node(200, 450), Node(575, 325), Node(125, 460), Node(350, 615)]
 
 nodeList = []
-for i in range(8):
+for i in range(20):
     nodeList.append(randomNode())
 
-edgeList = [Edge(200, nodeList[0], nodeList[1]), Edge(200, nodeList[2], nodeList[3]), Edge(200, nodeList[1], nodeList[2]),
-            Edge(200, nodeList[4], nodeList[5]), Edge(200, nodeList[6], nodeList[7]), Edge(200, nodeList[5], nodeList[2]),
-            Edge(200, nodeList[0], nodeList[4])]
+edgeList = randomEdges(20, nodeList, 150)
+#edgeList = []
+
+# edgeList = [Edge(100, nodeList[0], nodeList[1]), Edge(100, nodeList[2], nodeList[3]), Edge(100, nodeList[1], nodeList[2]),
+#             Edge(100, nodeList[4], nodeList[5]), Edge(100, nodeList[6], nodeList[7]), Edge(100, nodeList[5], nodeList[2]),
+#             Edge(100, nodeList[0], nodeList[4]),
+#             Edge(100, nodeList[8], nodeList[9]), Edge(100, nodeList[10], nodeList[11]), Edge(100, nodeList[9], nodeList[10]),
+#             Edge(100, nodeList[12], nodeList[13]), Edge(100, nodeList[14], nodeList[15]), Edge(100, nodeList[13], nodeList[0]),
+#             Edge(100, nodeList[6], nodeList[14])]
 
 #nodeList = [Node(100, 100), Node(600, 600)]
 #edgeList = [Edge(200, nodeList[0], nodeList[1])]
