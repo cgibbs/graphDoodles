@@ -14,7 +14,7 @@ class Node:
     x = 0
     y = 0
     
-    def __init__(self, x, y, anchor=False, oppForceRadius=140):
+    def __init__(self, x, y, anchor=False, oppForceRadius=150):
         self.x = x
         self.y = y
         self.anchor = anchor
@@ -47,8 +47,8 @@ class Node:
             self.y += 200
     
     def pushAway(self, otherNode, strength=1):
-        otherNode.x -= ((self.x - otherNode.x) / 100) * strength
-        otherNode.y -= ((self.y - otherNode.y) / 100) * strength
+        otherNode.x -= ((self.x - otherNode.x) / 80) * strength
+        otherNode.y -= ((self.y - otherNode.y) / 80) * strength
         
         # otherNode.x = abs(otherNode.x)
         # otherNode.y = abs(otherNode.y)
@@ -80,16 +80,16 @@ class Edge:
         distance = nodeDistance(self.nodeOne, self.nodeTwo)
         
         # TODO: if nodeOne closer to center, push it away; else, push nodeTwo away 
-        if (nodeDistance(self.nodeOne, DUMMY_CENTER_NODE) < nodeDistance(self.nodeTwo, DUMMY_CENTER_NODE)):
-            if (distance > self.eLength * 1.1):
+        if (nodeDistance(self.nodeOne, DUMMY_CENTER_NODE) > nodeDistance(self.nodeTwo, DUMMY_CENTER_NODE)):
+            if (distance > self.eLength * 1.3):
                 self.nodeTwo.moveToward(self.nodeOne, 5)
-            elif (distance < self.eLength * 0.9):
-                self.nodeOne.pushAway(self.nodeTwo, 2)
+            elif (distance < self.eLength * 0.8):
+                self.nodeOne.pushAway(self.nodeTwo, (self.eLength ** 2 / (distance * 10)))
         else:
-            if (distance > self.eLength * 1.1):
+            if (distance > self.eLength * 1.3):
                 self.nodeOne.moveToward(self.nodeTwo, 5)
-            elif (distance < self.eLength * 0.9):
-                self.nodeTwo.pushAway(self.nodeOne, 2)
+            elif (distance < self.eLength * 0.8):
+                self.nodeTwo.pushAway(self.nodeOne, (self.eLength ** 2 / (distance * 10)))
             
     def render(self):
         line(self.nodeOne.x, self.nodeOne.y, self.nodeTwo.x, self.nodeTwo.y)
@@ -117,7 +117,9 @@ basic program flow:
         render all nodes and edges
 """
 
-checksRemaining = 2000
+runTime = 2000
+fr = 0
+
 
 draw_c = color(100,100,100)
 
@@ -140,23 +142,23 @@ edgeList = randomEdges(20, nodeList, 150)
 #nodeList = [Node(100, 100), Node(600, 600)]
 #edgeList = [Edge(200, nodeList[0], nodeList[1])]
 
-
 def setup():
     size(WIDTH, HEIGHT)
     background(255)
     frameRate(30)
 
 def draw():
-    global checksRemaining, nodeList, edgeList, draw_c
+    global runTime, fr, nodeList, edgeList, draw_c
     background (255)
     for node in nodeList:
         node.render()
     for edge in edgeList:
         edge.render()
-    if (checksRemaining > 0):
+    if (fr < runTime):
         # gross, O(n^2)
         for node in nodeList:
             node.checkForIntruders(nodeList)
         for edge in edgeList:
             edge.validateEnds()
-        checksRemaining -= 1
+        fr += 1
+        saveFrame("frames/bw-####.png")
