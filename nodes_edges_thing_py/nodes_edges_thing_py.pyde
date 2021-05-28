@@ -31,13 +31,14 @@ class Node:
             # if closer than oppForceRadius, cheap and imprecise math here
             if (nodeDist < self.oppForceRadius):
                 if (nodeDistance(self, DUMMY_CENTER_NODE) > nodeDistance(node, DUMMY_CENTER_NODE)):
-                    self.pushAway(node, ((self.oppForceRadius * 2) / nodeDist))
+                    self.pushAway(node, ((self.oppForceRadius * 4) / nodeDist))
                 else:
-                    node.pushAway(self, ((self.oppForceRadius * 2) / nodeDist))
+                    node.pushAway(self, ((self.oppForceRadius * 4) / nodeDist))
     
     def moveToward(self, otherNode, strength=1):
-        self.x += ((otherNode.x - self.x) / 80) * strength
-        self.y += ((otherNode.y - self.y) / 80) * strength
+        # the divisor here affects how many orbital clouds form, and how stable they are?
+        self.x += ((otherNode.x - self.x) / 200) * strength
+        self.y += ((otherNode.y - self.y) / 200) * strength
         
         # self.x = abs(self.x)
         # self.y = abs(self.y)
@@ -48,8 +49,9 @@ class Node:
             self.y += 200
     
     def pushAway(self, otherNode, strength=1):
-        otherNode.x -= ((self.x - otherNode.x) / 80) * strength
-        otherNode.y -= ((self.y - otherNode.y) / 80) * strength
+        # the divisor here affects how many orbital clouds form, and how stable they are?
+        otherNode.x -= ((self.x - otherNode.x) / 200) * strength
+        otherNode.y -= ((self.y - otherNode.y) / 200) * strength
         
         # otherNode.x = abs(otherNode.x)
         # otherNode.y = abs(otherNode.y)
@@ -129,10 +131,10 @@ draw_c = color(100,100,100)
 #nodeList = [Node(400, 450), Node(375, 425), Node(325, 460), Node(450, 415), Node(200, 450), Node(575, 325), Node(125, 460), Node(350, 615)]
 
 nodeList = []
-for i in range(175):
+for i in range(300):
     nodeList.append(randomNode())
 
-edgeList = randomEdges(200, nodeList, 150)
+edgeList = randomEdges(400, nodeList, 150)
 #edgeList = []
 
 # edgeList = [Edge(100, nodeList[0], nodeList[1]), Edge(100, nodeList[2], nodeList[3]), Edge(100, nodeList[1], nodeList[2]),
@@ -153,15 +155,24 @@ def setup():
 def draw():
     global runTime, fr, nodeList, edgeList, draw_c
     background (255)
+    
+    if (mousePressed and (mouseButton == LEFT)):
+        nodeList.append(Node(mouseX, mouseY))
+    
     for node in nodeList:
         node.render()
     #for edge in edgeList:
         # edge.render()
-    if (fr < runTime):
+    # if (fr < runTime):
         # gross, O(n^2)
-        for node in nodeList:
-            node.checkForIntruders(nodeList)
-        for edge in edgeList:
-            edge.validateEnds()
-        fr += 1
-        saveFrame("frames/bw-####.png")
+        # for node in nodeList:
+        #     node.checkForIntruders(nodeList)
+        # for edge in edgeList:
+        #     edge.validateEnds()
+        # fr += 1
+        #saveFrame("frames/bw-####.png")
+        
+    for node in nodeList:
+        node.checkForIntruders(nodeList)
+    # for edge in edgeList:
+    #     edge.validateEnds()
